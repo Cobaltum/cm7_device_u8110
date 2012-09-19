@@ -131,8 +131,8 @@ PRODUCT_COPY_FILES += \
 # Audio
 PRODUCT_COPY_FILES += \
     device/huawei/u8110/prebuilt/etc/AudioFilter.csv:system/etc/AudioFilter.csv \
-    device/huawei/u8100/prebuilt/etc/AudioFilterU8110.csv:system/etc/AudioFilterU8110.csv \
-    device/huawei/u8100/prebuilt/etc/AudioFilterU8120.csv:system/etc/AudioFilterU8120.csv \
+    device/huawei/u8110/prebuilt/etc/AudioFilterU8110.csv:system/etc/AudioFilterU8110.csv \
+    device/huawei/u8110/prebuilt/etc/AudioFilterU8120.csv:system/etc/AudioFilterU8120.csv \
     device/huawei/u8110/prebuilt/etc/AutoVolumeControl.txt:system/etc/AutoVolumeControl.txt \
     device/huawei/u8110/prebuilt/etc/01_qc.cfg:system/etc/01_qc.cfg \
     vendor/huawei/u8110/proprietary/libaudioeq.so:system/lib/libaudioeq.so
