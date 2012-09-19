@@ -1,0 +1,26 @@
+Edit vendor/cyanogen/vendorsetup.sh to add a lunch “combo” for the U8110:
+add_lunch_combo cyanogen_u8110-eng
+
+Add a makefile for the u8110:
+cp vendor/cyanogen/products/cyanogen_u8220.mk vendor/cyanogen/products/cyanogen_u8110.mk
+
+Edit vendor/cyanogen/products/cyanogen_u8110.mk, replacing occurances of “u8220″ with “u8110″ (pay attention to case!).
+Use common sense. Basically, tailor the new makefile to be U8110 specific. 
+Pay specific attention to the paths to makefiles and such, as they need more intelligence than just a search/replace…
+
+Edit vendor/cyanogen/products/AndroidProducts.mk to add the following line:
+$(LOCAL_DIR)/cyanogen_u8110.mk \
+This tells the build system where to find the device’s makefile.
+
+Check out a copy of my u8110 device tree:
+cd device/huawei
+
+
+Copy proprietary files
+either by running extract-files.sh with a device connected in 
+or by running unzip-files.sh with a u8160 stock rom placed in as u8110.zip
+
+Set up the build environment:
+. build/envsetup.sh
+brunch u8110
+

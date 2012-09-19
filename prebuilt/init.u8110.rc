@@ -1,0 +1,110 @@
+on post-fs
+
+# create WIFI filesystem structure
+    mkdir /data/misc/wifi/sockets 0770 wifi wifi
+    mkdir /data/misc/dhcp 0770 dhcp dhcp
+    mkdir /data/system 0775 system system
+    chmod 0770 /data/misc/wifi
+    chmod 0660 /data/misc/wifi/wpa_supplicant.conf
+    chmod 0770 /data/misc/dhcp
+
+    # setup touchscreen calibration
+    chown system system /sys/module/msm_touch/parameters/tscal_xoffset
+    chown system system /sys/module/msm_touch/parameters/tscal_yoffset
+    chown system system /sys/module/msm_touch/parameters/tscal_xscale
+    chown system system /sys/module/msm_touch/parameters/tscal_yscale
+
+on boot
+    
+    # bluetooth
+    chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
+    chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
+    chmod 0660 /sys/class/rfkill/rfkill0/state
+    chown bluetooth bluetooth /proc/bluetooth/sleep/proto
+    chmod 0660 /proc/bluetooth/sleep/proto
+
+    # setup android gadget
+    write /sys/module/g_android/parameters/product_id 0x1038
+
+    # sd card polling
+    chown system system /sys/module/g_android/parameters/product_id
+    chown system system /sys/bus/platform/devices/msm_sdcc.1/polling
+    chown system system /sys/bus/platform/devices/msm_sdcc.2/polling
+    chown system system /sys/devices/platform/android_usb/composition
+    chown system system /sys/devices/platform/android_usb/remote_wakeup
+
+    # enable mass storage on sdcard
+    write /sys/devices/platform/mass_storage/lun0/file /dev/block/mmcblk0p1
+    write /sys/bus/platform/drivers/msm_sdcc/msm_sdcc.1/polling 1
+    write /sys/bus/platform/drivers/msm_sdcc/msm_sdcc.2/polling 1
+
+    # increase read throughput from sd card
+    write /sys/block/mmcblk0/bdi/read_ahead_kb 2048
+
+    # cpufreq configurations
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 245760
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ondemand
+    write /sys/devices/system/cpu/cpufreq/ondemand/sampling_rate 500000
+    write /sys/devices/system/cpu/cpufreq/ondemand/up_threshold 90
+    write /sys/devices/system/cpu/cpufreq/ondemand/down_threshold 30
+
+    # logs
+    chmod 0777 /sys/kernel/logger/log_main/enable
+    chmod 0777 /sys/kernel/logger/log_events/enable
+    chmod 0777 /sys/kernel/logger/log_radio/enable
+    chmod 0777 /sys/kernel/logger/log_main/priority
+    chmod 0777 /sys/kernel/logger/log_events/priority
+    chmod 0777 /sys/kernel/logger/log_radio/priority
+
+service qmuxd /system/bin/qmuxd
+
+service hciattach /system/bin/sh /system/etc/init.qcom.bt.sh
+    user bluetooth
+    group qcom_oncrpc bluetooth net_bt_admin system
+    disabled
+    oneshot
+
+service bm3OPP /system/bin/sdptool add --channel=4 OPUSH
+    user bluetooth
+    group bluetooth net_bt_admin
+    disabled
+    oneshot
+
+# WPA SETTINGS
+service wpa_supplicant /system/bin/wpa_supplicant -Dawext -ieth0 -W -c/data/misc/wifi/wpa_supplicant.conf
+    group wifi inet
+    socket wpa_eth0 dgram 660 wifi wifi
+    disabled
+    oneshot
+
+service dhcpcd_eth0 /system/bin/dhcpcd -ABKL
+    disabled
+    oneshot
+    
+service iprenew_eth0 /system/bin/dhcpcd -n
+    disabled
+    oneshot
+
+# Compass / Accelerometer daemon
+service akmd /system/bin/akmd2
+    user compass
+    group compass misc input
+
+# Atheros BT filter
+on property:init.svc.bluetoothd=running
+    write /sys/devices/virtual/bluetooth/hci0/idle_timeout 7000
+    start abtfilt
+
+on property:init.svc.bluetoothd=stopped
+    stop abtfilt
+
+service abtfilt /system/bin/abtfilt -c -d -z -n
+    disabled
+    oneshot
+
+# Wifi hotspot
+service hostapd /system/bin/logwrapper /system/bin/hostapd /data/misc/wifi/hostapd.conf
+    group wifi inet
+    socket wpa_athap0 dgram 660 wifi wifi
+    disabled
+    oneshot
